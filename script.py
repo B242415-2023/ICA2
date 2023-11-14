@@ -8,6 +8,7 @@ import subprocess
 
 ##1. Gather user input for taxonomic group and protein family
 print("-------------------------------------------")
+print("-------------------------------------------")
 #pfam = input("Enter Protein Family:\n")
 pfam = "glucose-6-phosphatase"
 #pfam = "ABC transporters"
@@ -17,17 +18,19 @@ taxo = "aves"
 #taxo = "mammals"
 
 print("-------------------------------------------")
+print("-------------------------------------------")
 
 
 
 ##2. Gather desired protein sequences  (Include checks)
 #2a. Query for taxonID
-print("Gathering taxonID for " + taxo)
+print("Gathering taxonID for " + taxo + "\n...")
 esearchTaxoquery = "esearch -db taxonomy -spell -query \"" + taxo + "\" | efetch -format uid"
-esearchTaxoUID = subprocess.check_output(esearchTaxoquery, shell=True).decode("utf-8") #QUERY TAXONID
-print("TAXONID: " + str(esearchTaxoUID))
+esearchTaxoUID = subprocess.check_output(esearchTaxoquery, shell=True).decode("utf-8").rstrip() #QUERY TAXONID
+print("TAXONID: " + str(esearchTaxoUID) + "\n...\nGathered")
+print("-------------------------------------------")
 #2b. Query for protein sequences filtered with taxonID with :exp to get taxo subtree groups
-print("Gathering protein sequences of " + pfam + " in " + taxo + " txid:" +esearchTaxoUID + "...")
+print("Gathering protein sequences of " + pfam + " in " + taxo + " txid:" +esearchTaxoUID + "\n...")
 esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + "\" | efetch -format fasta > seq.fasta"
 esearchProtfasta = os.system(esearchProtquery)
 print("Gathered")
@@ -37,7 +40,8 @@ with open("seq.fasta") as infile:
   seqcount = infileread.count(">")
 
 print("Number of sequences gathered: " + str(seqcount))
-#2d. Check if empty. If empty, rerequest pfam and taxo
+print("-------------------------------------------")
+#2d. Check if empty. If empty, rerequest pfam and taxo (may have to switch order so its first)
 
 
 
