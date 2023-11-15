@@ -79,6 +79,9 @@ print("Plotting convservation of seuqnece alignment\n...")
 os.system("plotcon -sequences aligned.fasta -winsize=4 -graph png -sprotein1")
 print("Plotted")
 print("-------------------------------------------")
+
+
+
 ##4. Scan for PROSITE motifs in sequences
 
 
