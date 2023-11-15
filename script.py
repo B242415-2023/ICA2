@@ -6,6 +6,7 @@ import subprocess
 
 #######################  OPTIONS  #######################
 max_number_of_sequences=1000
+availthreads = subprocess.check_output("nproc", shell=True).decode("utf-8").rstrip()
 
 
 
@@ -29,7 +30,7 @@ print("-------------------------------------------")
 print("Gathering taxonID for " + taxo + "\n...")
 esearchTaxoquery = "esearch -db taxonomy -spell -query \"" + taxo + "\" | efetch -format uid"
 esearchTaxoUID = subprocess.check_output(esearchTaxoquery, shell=True).decode("utf-8").rstrip() #QUERY TAXONID
-print("TAXONID: " + str(esearchTaxoUID) + "\n...\nGathered")
+print("Gathered" + "\nTAXONID: " + str(esearchTaxoUID) )
 
 if (esearchTaxoUID == ""): #error check
   print("Invalid taxonomic group\nExiting program...")
@@ -66,10 +67,18 @@ print("-------------------------------------------")
 #######einfo -db protein -fields
 
 
-##3. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation
+##3. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation plot
+#3a. ClustalO
+print("Aligning sequences via ClustalO with: " + availthreads + " threads\n...")
+os.system("clustalo -i seq.fasta -o aligned.fasta --force --threads=" + str(availthreads))
+print("Aligned")
+print("-------------------------------------------")
 
-
-
+#3b.  plotcon
+print("Plotting convservation of seuqnece alignment\n...")
+os.system("plotcon -sequences aligned.fasta -winsize=4 -graph png -sprotein1")
+print("Plotted")
+print("-------------------------------------------")
 ##4. Scan for PROSITE motifs in sequences
 
 
