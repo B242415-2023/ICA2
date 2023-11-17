@@ -100,7 +100,7 @@ print("Scanning sequences for motifs\n...")
 #4a. Separate sequences in seq.fasta
 with open("seq.fasta") as infile:
   allseq = infile.read().rstrip().split(">")
-  allseq1 = [">" + seqelement for seqelement in allseq]
+  allseq1 = [">" + seqelement for seqelement in allseq.pop(0)]
 
 #4bi. Create list of headers
 seqheaders = []
@@ -118,18 +118,24 @@ for header in seqheaders:
   
 #4c. Run patmatmotifs on each seq in allseq1
 for header in seqheaders:
+  #print("Scanning: " + header)
   with open("temp.fasta", "w") as infile:
     infile.write(seqdict.get(header))
   headerfileformat = header.replace(">", "").replace(" ", "_").replace("[", "").replace("]", "").replace(",", "").replace(":", "")
-  os.system("patmatmotifs -full -sequence temp.fasta -outfile ./motifs/" + headerfileformat + ".patmatmotifs")
+  os.system("patmatmotifs -auto -full -rdesshow2 -rscoreshow2 -sequence temp.fasta -outfile ./motifs/" + headerfileformat + ".patmatmotifs")
   
 print("Done. Results in ./motifs/")
+print("-------------------------------------------")
 
 #patmatmotifs -sequence seq.fasta -outfile motif.txt
 
+
+
 ##5. Other EMBOSS analysis
 
-########remove plurals
 
-#####if statement for different esearch filters, remove 'associated'
+#########notes#############
+########remove plurals
+########## error trap for every step
+#####if statement for different esearch filters, remove 'associated' predicted isoform partial
 ##########switch error checks to try, except       to catch all errors and outcomes
