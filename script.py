@@ -20,6 +20,12 @@ pfam = "glucose-6-phosphatase"
 #taxo = input("Enter Taxonomic Group:\n")
 taxo = "aves"
 #taxo = "mammals"
+
+
+#pfam = "adenyl cyclases"
+#taxo = "vertebrates"
+
+
 print("-------------------------------------------")
 print("-------------------------------------------")
 
@@ -82,10 +88,18 @@ print("-------------------------------------------")
 
 
 
-##4. Scan for PROSITE motifs in sequences
+##4. Scan for PROSITE motifs in sequences patmatmotifs
+#4a. Separate sequences in seq.fasta
 
+with open("seq.fasta") as infile:
+  allseq = infile.read().rstrip().split(">")
+  
 
+#patmatmotifs -sequence seq.fasta -outfile motif.txt
 
 ##5. Other EMBOSS analysis
 
+
+
+#####if statement for different esearch filters, remove 'associated'
 
