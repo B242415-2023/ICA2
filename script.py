@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 #Modules
 import os
 import sys
@@ -8,7 +9,8 @@ import subprocess
 max_number_of_sequences=1000
 availthreads = subprocess.check_output("nproc", shell=True).decode("utf-8").rstrip()
 #availthreads = 64
-rmkeywords = ("associated", "predicted", "isoform", "partial")
+rmkeywords = ("associated", "predicted", "isoform")
+
 
 #######################  FUNCTIONS  #######################
 #for calling bash commands for each individual sequence
@@ -35,20 +37,22 @@ def indivbash(bashline, outfileloci, outfileformat, dirorheader=1, goutfileforma
       except:
         print("Error with " + header)
 
+
 #######################  Folders  #######################
 os.system("mkdir results")
 os.system("mkdir temp")
 
-
+##########################################################
 #######################  Pipeline  #######################
-##1. Gather user input for taxonomic group and protein family
+##########################################################
+
+#######################  1. Gather user input for taxonomic group and protein family  #######################
 print("-------------------------------------------")
 print("-------------------------------------------")
-#pfam = input("Enter Protein Family:\n")
-pfam = "glucose-6-phosphatase"
+taxo = input("Enter Taxonomic Group:\n")
+pfam = input("Enter Protein Family:\n")
+
 pfampartialflag = input("Remove partial sequences? (NOT PARTIAL) (y/n)")
-#taxo = input("Enter Taxonomic Group:\n")
-taxo = "aves"
 
 print("Remove sequences with keywords in rmkeywords? \n(" + str(" ".join(rmkeywords)) + ")")
 rmkeywordflag = input("rm sequences? (y/n)")
@@ -59,7 +63,7 @@ print("-------------------------------------------")
 
 
 
-##2. Gather desired protein sequences  (Include checks)
+#######################  2. Gather desired protein sequences  #######################
 #2a. Query for taxonID
 print("Gathering taxonID for " + taxo + "\n...")
 esearchTaxoquery = "esearch -db taxonomy -spell -query \"" + taxo + "\" | efetch -format uid"
@@ -97,11 +101,11 @@ if (pfam[-1].lower() == "s"): #plural catch
     print("Not valid response (y/n)\nExiting program")
     exit()
 
-#try: #error catch
-#  esearchProtfasta = os.system(esearchProtquery)
-#except:
-#  print("Invalid protein family (Please avoid plurals)\n Exiting program")
-#  exit()
+try: #error catch
+  esearchProtfasta = os.system(esearchProtquery)
+except:
+  print("Invalid protein family (Please avoid plurals)\n Exiting program")
+  exit()
 
 print("Done")
 
@@ -127,11 +131,11 @@ elif (seqcount > max_number_of_sequences):
     print("Not valid response (y/n)\nExiting Program")
     exit()
 
-  
-  
-###########GIVE OPTION AND INFO ABOUT SEQ SPECIES ORIGIN
 print("-------------------------------------------")
-##3. Sequence data prep
+
+
+
+#######################  3. Sequence data prep  #######################
 print("Sequence data preparation\n...")
 #3a. Separate sequences in seq.fasta
 with open("seq.fasta") as infile:
@@ -190,7 +194,7 @@ print("Done")
 print("-------------------------------------------")
 
 
-
+#######################  SEQUENCE ANALYSIS  #######################
 ##4. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation plot
 #4a. ClustalO
 print("Aligning sequences via ClustalO with: " + availthreads + " threads\n...")
@@ -263,14 +267,3 @@ print("Gathering pepstats data\n...")
 indivbash("pepstats -auto -sequence temp.fasta -outfile ", "./results/pepstats/", ".pepstats", 1)
 print("Done - Results in ./results/pepstats/")
 print("-------------------------------------------")
-
-
-
-
-
-
-
-#########notes#############
-
-########## error trap for every step
-
