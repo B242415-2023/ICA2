@@ -52,10 +52,10 @@ print("-------------------------------------------")
 taxo = input("Enter Taxonomic Group:\n")
 pfam = input("Enter Protein Family:\n")
 
-pfampartialflag = input("Remove partial sequences? (NOT PARTIAL) (y/n)")
+pfampartialflag = input("Remove partial sequences? (NOT PARTIAL) (y/n)\n")
 
 print("Remove sequences with keywords in rmkeywords? \n(" + str(" ".join(rmkeywords)) + ")")
-rmkeywordflag = input("rm sequences? (y/n)")
+rmkeywordflag = input("Filter against keywords? (y/n)\n")
 
 
 print("-------------------------------------------")
@@ -90,7 +90,7 @@ elif pfampartialflag == "y":
   esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + " NOT PARTIAL\" | efetch -format fasta > seq.fasta"
 
 if (pfam[-1].lower() == "s"): #plural catch
-  print("Query protein family may be in plural form which may affect query sequences for a 0 hit result. Suggested to remove plural and write singular protein family. (eg. ABC transporter rather than ABC transporters)")
+  print("PLURAL DETECTED IN PROTEIN FAMILY QUERY\nQuery protein family may be in plural form which may affect query sequences for a 0 hit result. Suggested to remove plural and write singular protein family. (eg. ABC transporter rather than ABC transporters)")
   usercont = input("Do you wish to continue? (y/n)")
   if (usercont == "y"):
     print("Continuing...")
@@ -198,7 +198,7 @@ print("-------------------------------------------")
 ##4. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation plot
 #4a. ClustalO
 print("Aligning sequences via ClustalO with: " + availthreads + " threads\n...")
-os.system("clustalo -i seq.fasta -o ./results/aligned.fasta --force --threads=" + str(availthreads))
+os.system("clustalo -i finalseq.fasta -o ./results/aligned.fasta --force --threads=" + str(availthreads))
 print("Done")
 print("-------------------------------------------")
 
