@@ -42,20 +42,40 @@ def indivbash(bashline, outfileloci, outfileformat, dirorheader=1, goutfileforma
 os.system("mkdir results")
 os.system("mkdir temp")
 
+
+
+
+
+
 ##########################################################
 #######################  Pipeline  #######################
 ##########################################################
 
+
+
 #######################  1. Gather user input for taxonomic group and protein family  #######################
 print("-------------------------------------------")
 print("-------------------------------------------")
+
 taxo = input("Enter Taxonomic Group:\n")
 pfam = input("Enter Protein Family:\n")
+print("-------------------------------------------")
+while True:
+  pfampartialflag = input("Remove partial sequences? (NOT PARTIAL) (y/n)\n")
+  if (pfampartialflag == "y" or pfampartialflag == "n"):
+    break
+  else:
+    print("Not valid response. Please retry")
+  
+print("-------------------------------------------")
 
-pfampartialflag = input("Remove partial sequences? (NOT PARTIAL) (y/n)\n")
-
-print("Remove sequences with keywords in rmkeywords? \n(" + str(" ".join(rmkeywords)) + ")")
-rmkeywordflag = input("Filter against keywords? (y/n)\n")
+while True:
+  print("Remove sequences with keywords in rmkeywords? \n(" + str(" ".join(rmkeywords)) + ")")
+  rmkeywordflag = input("Filter against keywords? (y/n)\n")
+  if (rmkeywordflag == "y" or rmkeywordflag == "n"):
+    break
+  else:
+    print("Not valid response. Please retry")
 
 
 print("-------------------------------------------")
@@ -256,13 +276,7 @@ indivbash("pepcoil -auto -rdesshow2 -sequence temp.fasta -outfile ", "./results/
 print("Done - Results in ./results/pepcoil/")
 print("-------------------------------------------")
 
-##13. EMBOSS Analysis 8 - pepinfo - hydrophobicity plots , optimal matching hydrophobicity scale (OHM), or consensus parameters. ii. Histogram of the presence of residues with the physico-chemical properties: Tiny, Small, Aliphatic, Aromatic, Non-polar, Polar, Charged, Positive, Negative
-print("Gathering pepinfo data\n...")
-indivbash("pepinfo -auto -nogeneralplot -nohydropathyplot -sequence temp.fasta -outfile ", "./results/pepinfo/", ".pepinfo", 1)
-print("Done - Results in ./results/pepinfo/")
-print("-------------------------------------------")
-
-##14. EMBOSS Analysis 9 - pepstats - Molecular weight, Number of residues ,Average residue weight, Charge ,Isoelectric point,For each type of amino acid: number, molar percent, DayhoffStat,For each physico-chemical class of amino acid: number, molar percent,Probability of protein expression in E. coli inclusion bodies,Molar extinction coefficient (A280),Extinction coefficient at 1 mg/ml (A280)
+##13. EMBOSS Analysis 9 - pepstats - Molecular weight, Number of residues ,Average residue weight, Charge ,Isoelectric point,For each type of amino acid: number, molar percent, DayhoffStat,For each physico-chemical class of amino acid: number, molar percent,Probability of protein expression in E. coli inclusion bodies,Molar extinction coefficient (A280),Extinction coefficient at 1 mg/ml (A280)
 print("Gathering pepstats data\n...")
 indivbash("pepstats -auto -sequence temp.fasta -outfile ", "./results/pepstats/", ".pepstats", 1)
 print("Done - Results in ./results/pepstats/")
