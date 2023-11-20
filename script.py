@@ -10,7 +10,7 @@ availthreads = subprocess.check_output("nproc", shell=True).decode("utf-8").rstr
 
 #######################  FUNCTIONS  #######################
 #for calling bash commands for each individual sequence
-def indivbash(bashline, outfileloci, outfileformat, dirorheader, goutfileformat =""):
+def indivbash(bashline, outfileloci, outfileformat, dirorheader=1, goutfileformat =""):
   os.system("mkdir " + outfileloci)
   for header in seqheaders:
     with open("temp.fasta", "w") as infile:
@@ -65,7 +65,7 @@ print("-------------------------------------------")
 print("Gathering taxonID for " + taxo + "\n...")
 #esearchTaxoquery = "esearch -db taxonomy -spell -query \"" + taxo + "\" | efetch -format uid"
 #esearchTaxoUID = subprocess.check_output(esearchTaxoquery, shell=True).decode("utf-8").rstrip() #QUERY TAXONID
-#print("Gathered" + "\nTAXONID: " + str(esearchTaxoUID) )
+#print("Done" + "\nTAXONID: " + str(esearchTaxoUID) )
 
 #if (esearchTaxoUID == ""): #error check
 #  print("Invalid taxonomic group ?(Please avoid plurals)\nExiting program...")
@@ -176,21 +176,48 @@ print("-------------------------------------------")
 ##8. EMBOSS Analysis 3 - freak - resuidue frequency plot
 print("Plotting residue frequency\n...")
 indivbash("freak -auto -graph svg -seqall temp.fasta -odirectory ", "./results/freak/", "", 0)
-print("Done - Results in ./results/freak")
+print("Done - Results in ./results/freak/")
 print("-------------------------------------------")
 
 ##9. EMBOSS Analysis 4 - helixturnhelix - helix turn helix motif searching for nucleic acid binding motifs
 print("Scanning for nucleic acid binding site motifs\n...")
 indivbash("helixturnhelix -sprotein1 -warning FALSE -rdesshow2 -auto -sequence temp.fasta -outfile ", "./results/helixturnhelix/", ".helixturnhelix", 1)
-print("Done - Results in ./results/helixturnhelix")
+print("Done - Results in ./results/helixturnhelix/")
 print("-------------------------------------------")
 
 ##10. EMBOSS Analysis 5 - hmoment - calculate and plot hydrophobic moment 
 print("Plotting hydrophobic moments\n...")
-indivbash("hmoment -auto -seqall temp.fasta -graph svg -outfile ", "./results/hmoment/", ".hmoment", 2 , ".svg")
-indivbash("hmoment -auto -seqall temp.fasta -graph svg -goutfile ", "./results/hmoment/", ".svg", 1)
-print("Done - Results in ./results/hmoment")
+indivbash("hmoment -auto -seqall temp.fasta -outfile ", "./results/hmoment/", ".hmoment", 1)
+print("Done - Results in ./results/hmoment/")
 print("-------------------------------------------")
+
+##11. EMBOSS Analysis 6 - iep - isoelectric point
+print("Calculating isoelectric point\n...")
+indivbash("iep -auto -sequence temp.fasta -outfile ", "./results/iep/", ".iep", 1)
+print("Done - Results in ./results/iep/")
+print("-------------------------------------------")
+
+##12. EMBOSS Analysis 7 - pepcoil - coiled coil regions
+print("Predicting coiled coil regions\n...")
+indivbash("pepcoil -auto -rdesshow2 -sequence temp.fasta -outfile ", "./results/pepcoil/", ".pepcoil", 1)
+print("Done - Results in ./results/pepcoil/")
+print("-------------------------------------------")
+
+##13. EMBOSS Analysis 8 - pepinfo - hydrophobicity plots , optimal matching hydrophobicity scale (OHM), or consensus parameters. ii. Histogram of the presence of residues with the physico-chemical properties: Tiny, Small, Aliphatic, Aromatic, Non-polar, Polar, Charged, Positive, Negative
+
+print("Gathering pepinfo data\n...")
+indivbash("pepinfo -auto -nogeneralplot -nohydropathyplot -sequence temp.fasta -outfile ", "./results/pepinfo/", ".pepinfo", 1)
+print("Done - Results in ./results/pepinfo/")
+print("-------------------------------------------")
+
+##14. EMBOSS Analysis 9 - pepstats - Molecular weight, Number of residues ,Average residue weight, Charge ,Isoelectric point,For each type of amino acid: number, molar percent, DayhoffStat,For each physico-chemical class of amino acid: number, molar percent,Probability of protein expression in E. coli inclusion bodies,Molar extinction coefficient (A280),Extinction coefficient at 1 mg/ml (A280)
+
+print("Gathering pepstats data\n...")
+indivbash("pepstats -auto -sequence temp.fasta -outfile ", "./results/pepstats/", ".pepstats", 1)
+print("Done - Results in ./results/pepstats/")
+print("-------------------------------------------")
+
+
 
 
 ##5. Other EMBOSS analysis
