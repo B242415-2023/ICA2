@@ -8,12 +8,13 @@ import subprocess
 max_number_of_sequences=1000
 availthreads = subprocess.check_output("nproc", shell=True).decode("utf-8").rstrip()
 #availthreads = 64
+rmkeywords = ("associated", "predicted", "isoform", "partial")
 
 #######################  FUNCTIONS  #######################
 #for calling bash commands for each individual sequence
 def indivbash(bashline, outfileloci, outfileformat, dirorheader=1, goutfileformat =""):
   os.system("mkdir " + outfileloci)
-  for header in seqheaders:
+  for header in seqdict.keys():
     with open("temp.fasta", "w") as infile:
       infile.write(seqdict.get(header))
     if (dirorheader == 1):
@@ -39,14 +40,20 @@ os.system("mkdir results")
 os.system("mkdir temp")
 
 
-
+#######################  Pipeline  #######################
 ##1. Gather user input for taxonomic group and protein family
 print("-------------------------------------------")
 print("-------------------------------------------")
 #pfam = input("Enter Protein Family:\n")
 pfam = "glucose-6-phosphatase"
+pfampartialflag = input("Remove partial sequences? (NOT PARTIAL) (y/n)")
 #taxo = input("Enter Taxonomic Group:\n")
 taxo = "aves"
+
+print("Remove sequences with keywords in rmkeywords? \n(" + str(" ".join(rmkeywords)) + ")")
+rmkeywordflag = input("rm sequences? (y/n)")
+
+
 print("-------------------------------------------")
 print("-------------------------------------------")
 
@@ -73,24 +80,28 @@ print("-------------------------------------------")
 #2b. Query for protein sequences filtered with taxonID with :exp to get taxo subtree groups
 print("Gathering protein sequences of " + pfam + " in " + taxo + " txid:" +esearchTaxoUID + "\n...")
 
-esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + "\" | efetch -format fasta > seq.fasta"
+if pfampartialflag == "n":
+  esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + "\" | efetch -format fasta > seq.fasta"
+elif pfampartialflag == "y":
+  esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + " NOT PARTIAL\" | efetch -format fasta > seq.fasta"
 
-if (pfam[-1].lower() == "s"):
+if (pfam[-1].lower() == "s"): #plural catch
   print("Query protein family may be in plural form which may affect query sequences for a 0 hit result. Suggested to remove plural and write singular protein family. (eg. ABC transporter rather than ABC transporters)")
   usercont = input("Do you wish to continue? (y/n)")
   if (usercont == "y"):
-    break
+    print("Continuing...")
   elif (usercont == "n"):
+    print("Exiting...")
     exit()
   else:
-    print("Not valid response (y/n)")
+    print("Not valid response (y/n)\nExiting program")
     exit()
 
-try:
-  esearchProtfasta = os.system(esearchProtquery)
-except:
-  print("Invalid protein family (Please avoid plurals)\n Exiting program")
-  exit()
+#try: #error catch
+#  esearchProtfasta = os.system(esearchProtquery)
+#except:
+#  print("Invalid protein family (Please avoid plurals)\n Exiting program")
+#  exit()
 
 print("Done")
 
@@ -101,78 +112,103 @@ with open("seq.fasta") as infile:
 
 print("Number of sequences gathered: " + str(seqcount))
 
-if (seqcount == 0): #error check
+if (seqcount == 0): #error check for empty or >maxseqcount seqdata
   print("Invalid protein family (Please avoid plurals)\nExiting program...")
   exit()
 elif (seqcount > max_number_of_sequences):
-  print("Exceeds threshold max number of sequences, " + str(max_number_of_sequences)")
+  print("Exceeds threshold max number of sequences, " + str(max_number_of_sequences))
   maxnumbercheck = input("Do you wish to continue with " + seqcount + " sequences? (y/n)")
   if (maxnumbercheck ==  "y"):
-    print("Continuing")
+    print("Continuing...")
   elif(maxnumbercheck == "n"):
+    print("Exiting...")
     exit()
   else:
-    print("Not valid response (y/n)")
+    print("Not valid response (y/n)\nExiting Program")
     exit()
+
   
   
 ###########GIVE OPTION AND INFO ABOUT SEQ SPECIES ORIGIN
-  
 print("-------------------------------------------")
-
-##3. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation plot
-#3a. ClustalO
-print("Aligning sequences via ClustalO with: " + availthreads + " threads\n...")
-
-os.system("clustalo -i seq.fasta -o ./results/aligned.fasta --force --threads=" + str(availthreads))
-
-print("Done")
-print("-------------------------------------------")
-
-#3b.  plotcon
-print("Plotting convservation of sequence alignment\n...")
-
-os.system("plotcon -sequences ./results/aligned.fasta -winsize=4 -graph png -sprotein1 -gdirectory results")
-
-print("Done")
-print("-------------------------------------------")
-
-
-
-##4. Sequence data prep
+##3. Sequence data prep
 print("Sequence data preparation\n...")
-#4a. Separate sequences in seq.fasta
+#3a. Separate sequences in seq.fasta
 with open("seq.fasta") as infile:
   allseq = infile.read().rstrip().split(">")
   allseq.pop(0)
   allseq1 = [">" + seqelement for seqelement in allseq]
 
-#4bi. Create list of headers
+#3bi. Create list of headers
 seqheaders = []
 for myseq in allseq1:
   headerend = myseq.find("\n")
   header = myseq[:headerend]
   seqheaders.append(header)
   
-#4bii. Create dictionary of header:fasta
+#3bii. Create dictionary of header:fasta
 seqdict = {}
 i=0
 for header in seqheaders:
   seqdict[header] = allseq1[i]
   i=i+1
 
+#3d. Remove headers with keywords
+open("finalseq.fasta", "w").close()
+
+if rmkeywordflag == "y":
+  print("Removing keyword sequences")
+  for rmkeyword in rmkeywords:
+    for header in seqheaders:
+      if (header.lower().find(rmkeyword) > -1):
+        del seqdict[header]
+elif rmkeywordflag == "n":
+  print("Keeping keyword sequences")
+
+
+for header in seqdict.keys():
+  with open("finalseq.fasta", "a") as outfile:
+    outfile.write(seqdict[header])
+    
+with open("finalseq.fasta") as infile:
+  infileread = infile.read()
+  seqcountfinal = infileread.count(">")
+
+print(str(seqcount - seqcountfinal) + " sequences removed")
+
+#3d. Get list of species
+seqspecies = []
+for header in seqdict.keys():
+  startpos = header.find("[")
+  endpos = header.find("]")
+  seqspecies.append(header[startpos+1:endpos])
+
+print("Dataset contains sequences from " + str(len(set(seqspecies))) + " unique species")
+print("Final dataset contains " + str(seqcountfinal) + " sequences")
+
+print("Done")
+print("-------------------------------------------")
+
+
+
+##4. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation plot
+#4a. ClustalO
+print("Aligning sequences via ClustalO with: " + availthreads + " threads\n...")
+os.system("clustalo -i seq.fasta -o ./results/aligned.fasta --force --threads=" + str(availthreads))
+print("Done")
+print("-------------------------------------------")
+
+#4b.  plotcon
+print("Plotting convservation of sequence alignment\n...")
+os.system("plotcon -sequences ./results/aligned.fasta -winsize=4 -graph png -sprotein1 -gdirectory results")
 print("Done")
 print("-------------------------------------------")
 
 ##5 Run patmatmotifs on each seq in allseq1 (Scan for PROSITE motifs in sequences patmatmotifs)
 print("Scanning sequences for motifs\n...")
-
 indivbash("patmatmotifs -auto -full -raccshow2 -rstrandshow2 -rusashow2 -rdesshow2 -rscoreshow2 -sequence temp.fasta -outfile ", "./results/motifs/", ".patmatmotifs", 1)
-
 print("Done - Results in ./results/motifs/")
 print("-------------------------------------------")
-
-
 
 ##6. EMBOSS Analysis 1 - sigcleave - signal sequence cleavage site
 print("Scanning sequences for signal peptide cleavage sites\n...")
@@ -217,7 +253,6 @@ print("Done - Results in ./results/pepcoil/")
 print("-------------------------------------------")
 
 ##13. EMBOSS Analysis 8 - pepinfo - hydrophobicity plots , optimal matching hydrophobicity scale (OHM), or consensus parameters. ii. Histogram of the presence of residues with the physico-chemical properties: Tiny, Small, Aliphatic, Aromatic, Non-polar, Polar, Charged, Positive, Negative
-
 print("Gathering pepinfo data\n...")
 indivbash("pepinfo -auto -nogeneralplot -nohydropathyplot -sequence temp.fasta -outfile ", "./results/pepinfo/", ".pepinfo", 1)
 print("Done - Results in ./results/pepinfo/")
@@ -238,5 +273,4 @@ print("-------------------------------------------")
 #########notes#############
 
 ########## error trap for every step
-#####if statement for different esearch filters, remove 'associated' predicted isoform partial
-##########switch error checks to try, except       to catch all errors and outcomes
+
