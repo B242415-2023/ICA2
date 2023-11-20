@@ -7,6 +7,7 @@ import subprocess
 #######################  OPTIONS  #######################
 max_number_of_sequences=1000
 availthreads = subprocess.check_output("nproc", shell=True).decode("utf-8").rstrip()
+#availthreads = 64
 
 #######################  FUNCTIONS  #######################
 #for calling bash commands for each individual sequence
@@ -44,17 +45,8 @@ print("-------------------------------------------")
 print("-------------------------------------------")
 #pfam = input("Enter Protein Family:\n")
 pfam = "glucose-6-phosphatase"
-#pfam = "ABC transporter"
-
 #taxo = input("Enter Taxonomic Group:\n")
 taxo = "aves"
-#taxo = "mammals"
-#pfam = "kinase"
-#taxo = "rodents"
-#pfam = "adenyl cyclases"
-#taxo = "vertebrates"
-
-
 print("-------------------------------------------")
 print("-------------------------------------------")
 
@@ -63,21 +55,42 @@ print("-------------------------------------------")
 ##2. Gather desired protein sequences  (Include checks)
 #2a. Query for taxonID
 print("Gathering taxonID for " + taxo + "\n...")
-#esearchTaxoquery = "esearch -db taxonomy -spell -query \"" + taxo + "\" | efetch -format uid"
-#esearchTaxoUID = subprocess.check_output(esearchTaxoquery, shell=True).decode("utf-8").rstrip() #QUERY TAXONID
-#print("Done" + "\nTAXONID: " + str(esearchTaxoUID) )
+esearchTaxoquery = "esearch -db taxonomy -spell -query \"" + taxo + "\" | efetch -format uid"
+try:
+  esearchTaxoUID = subprocess.check_output(esearchTaxoquery, shell=True).decode("utf-8").rstrip() #QUERY TAXONID
+except:
+  print("Invalid taxonomic group (Please avoid plurals)\nExiting Program...")
+  exit()
 
-#if (esearchTaxoUID == ""): #error check
-#  print("Invalid taxonomic group ?(Please avoid plurals)\nExiting program...")
-#  exit()
+print("Done" + "\nTAXONID: " + str(esearchTaxoUID) )
+
+if (esearchTaxoUID == ""): #error check
+  print("Invalid taxonomic group (Please avoid plurals)\nExiting program...")
+  exit()
   
 print("-------------------------------------------")
 
 #2b. Query for protein sequences filtered with taxonID with :exp to get taxo subtree groups
-#print("Gathering protein sequences of " + pfam + " in " + taxo + " txid:" +esearchTaxoUID + "\n...")
+print("Gathering protein sequences of " + pfam + " in " + taxo + " txid:" +esearchTaxoUID + "\n...")
 
-#esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + "\" | efetch -format fasta > seq.fasta"
-#esearchProtfasta = os.system(esearchProtquery)
+esearchProtquery = "esearch -db protein -spell -query \"txid" + esearchTaxoUID + "[Organism:exp]" + " AND " + pfam + "[PROT]" + "\" | efetch -format fasta > seq.fasta"
+
+if (pfam[-1].lower() == "s"):
+  print("Query protein family may be in plural form which may affect query sequences for a 0 hit result. Suggested to remove plural and write singular protein family. (eg. ABC transporter rather than ABC transporters)")
+  usercont = input("Do you wish to continue? (y/n)")
+  if (usercont == "y"):
+    break
+  elif (usercont == "n"):
+    exit()
+  else:
+    print("Not valid response (y/n)")
+    exit()
+
+try:
+  esearchProtfasta = os.system(esearchProtquery)
+except:
+  print("Invalid protein family (Please avoid plurals)\n Exiting program")
+  exit()
 
 print("Done")
 
@@ -92,20 +105,20 @@ if (seqcount == 0): #error check
   print("Invalid protein family (Please avoid plurals)\nExiting program...")
   exit()
 elif (seqcount > max_number_of_sequences):
-  print("Exceeds max number of sequences, " + str(max_number_of_sequences) + "\nExiting program...")
-  exit() ################EDIT NEED TO MAKE IT SO PROGRAM WILL ASK IF WANT TO CONTINUE
+  print("Exceeds threshold max number of sequences, " + str(max_number_of_sequences)")
+  maxnumbercheck = input("Do you wish to continue with " + seqcount + " sequences? (y/n)")
+  if (maxnumbercheck ==  "y"):
+    print("Continuing")
+  elif(maxnumbercheck == "n"):
+    exit()
+  else:
+    print("Not valid response (y/n)")
+    exit()
   
   
 ###########GIVE OPTION AND INFO ABOUT SEQ SPECIES ORIGIN
   
 print("-------------------------------------------")
-
-
-
-#######info -db taxonomy -fields
-#######need to use [Organism:exp] to get all associated taxID in subtree
-#######einfo -db protein -fields
-
 
 ##3. CLUSTALO for alignment, EMBOSS for plotcon for sequence conservation plot
 #3a. ClustalO
@@ -211,7 +224,6 @@ print("Done - Results in ./results/pepinfo/")
 print("-------------------------------------------")
 
 ##14. EMBOSS Analysis 9 - pepstats - Molecular weight, Number of residues ,Average residue weight, Charge ,Isoelectric point,For each type of amino acid: number, molar percent, DayhoffStat,For each physico-chemical class of amino acid: number, molar percent,Probability of protein expression in E. coli inclusion bodies,Molar extinction coefficient (A280),Extinction coefficient at 1 mg/ml (A280)
-
 print("Gathering pepstats data\n...")
 indivbash("pepstats -auto -sequence temp.fasta -outfile ", "./results/pepstats/", ".pepstats", 1)
 print("Done - Results in ./results/pepstats/")
@@ -220,11 +232,11 @@ print("-------------------------------------------")
 
 
 
-##5. Other EMBOSS analysis
+
 
 
 #########notes#############
-########remove plurals
+
 ########## error trap for every step
 #####if statement for different esearch filters, remove 'associated' predicted isoform partial
 ##########switch error checks to try, except       to catch all errors and outcomes
